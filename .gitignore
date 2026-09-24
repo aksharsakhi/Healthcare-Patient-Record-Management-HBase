@@ -1,0 +1,10 @@
+.DS_Store
+classes/
+*.class
+*.log
+*.aux
+*.nav
+*.out
+*.snm
+*.toc
+*.xdv

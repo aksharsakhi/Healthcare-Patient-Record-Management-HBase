@@ -1,0 +1,154 @@
+# ==============================================================================
+# 23CSE352: BIG DATA ANALYTICS - PROJECT REVIEW 2
+# Apache HBase Interactive Shell Commands & Analytical Queries
+# Topic: Healthcare Patient Record & Clinical Encounter Management
+# Dataset: UCI 130-US Hospitals Authentic Clinical Records (1999-2008)
+# Team: Sheela Akshar Sakhi & Nishanth S Gowda
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. CLUSTER HEALTH & STATUS CHECKS
+# ------------------------------------------------------------------------------
+status
+version
+whoami
+
+# ------------------------------------------------------------------------------
+# 2. DDL OPERATIONS: SCHEMA DESIGN & TABLE CREATION
+# Schema: Table 'patient_records' with 3 Column Families: 'admission', 'clinical', 'patient'
+# Composite Row Key: MedicalSpecialty#PatientNBR#EncounterID (e.g., Cardiology#8222157#2278392)
+# ------------------------------------------------------------------------------
+# Drop old table if needed
+# disable 'patient_records'
+# drop 'patient_records'
+
+# Create table with versions
+create 'patient_records', {NAME => 'admission', VERSIONS => 3}, {NAME => 'clinical'}, {NAME => 'patient'}
+
+# Verify table creation
+list
+describe 'patient_records'
+exists 'patient_records'
+
+# ------------------------------------------------------------------------------
+# 3. DML OPERATIONS: MANUAL INSERTION (PUT) FOR SAMPLE CLINICAL ENCOUNTERS
+# ------------------------------------------------------------------------------
+# Encounter 1: Pediatrics Endocrinology Admission
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'admission:encounter_id', '2278392'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'admission:admission_type', 'REFERRAL'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'admission:time_in_hospital', '1'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'clinical:specialty', 'Pediatrics_Endocrinology'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'clinical:num_lab_procs', '41'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'clinical:num_meds', '1'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'clinical:diag_1', '250.83'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:patient_nbr', '8222157'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:gender', 'Female'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:age', '[0-10)'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:insulin', 'No'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:diabetesMed', 'No'
+put 'patient_records', 'Pediatrics_Endocrinology#8222157#2278392', 'patient:readmitted', 'NO'
+
+# Encounter 2: Cardiology Admission (High-Risk Readmission <30 Days)
+put 'patient_records', 'Cardiology#55629189#149190', 'admission:encounter_id', '149190'
+put 'patient_records', 'Cardiology#55629189#149190', 'admission:admission_type', 'EMERGENCY'
+put 'patient_records', 'Cardiology#55629189#149190', 'admission:time_in_hospital', '3'
+put 'patient_records', 'Cardiology#55629189#149190', 'clinical:specialty', 'Cardiology'
+put 'patient_records', 'Cardiology#55629189#149190', 'clinical:num_lab_procs', '59'
+put 'patient_records', 'Cardiology#55629189#149190', 'clinical:num_meds', '18'
+put 'patient_records', 'Cardiology#55629189#149190', 'clinical:diag_1', '414.01'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:patient_nbr', '55629189'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:gender', 'Female'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:age', '[10-20)'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:insulin', 'Up'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:diabetesMed', 'Yes'
+put 'patient_records', 'Cardiology#55629189#149190', 'patient:readmitted', '<30'
+
+# Encounter 3: Internal Medicine Admission
+put 'patient_records', 'InternalMedicine#86047875#64410', 'admission:encounter_id', '64410'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'admission:admission_type', 'URGENT'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'admission:time_in_hospital', '2'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'clinical:specialty', 'InternalMedicine'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'clinical:num_lab_procs', '44'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'clinical:num_meds', '16'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'clinical:diag_1', '500.11'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'patient:patient_nbr', '86047875'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'patient:gender', 'Female'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'patient:age', '[20-30)'
+put 'patient_records', 'InternalMedicine#86047875#64410', 'patient:readmitted', 'NO'
+
+# ------------------------------------------------------------------------------
+# 4. POINT LOOKUP RETRIEVAL (GET)
+# ------------------------------------------------------------------------------
+# 4.1 Full Patient Clinical Dossier Lookup
+get 'patient_records', 'Cardiology#55629189#149190'
+
+# 4.2 Selective Column Family Lookup (Clinical metrics only)
+get 'patient_records', 'Cardiology#55629189#149190', 'clinical'
+
+# 4.3 Specific Qualifier Lookup (Readmission Risk status only)
+get 'patient_records', 'Cardiology#55629189#149190', 'patient:readmitted'
+
+# 4.4 Admission specifics lookup
+get 'patient_records', 'Cardiology#55629189#149190', 'admission'
+
+# ------------------------------------------------------------------------------
+# 5. GENERAL SCANNING & LONGITUDINAL PATIENT RANGE SCANS
+# ------------------------------------------------------------------------------
+# 5.1 Preview first 5 encounters
+scan 'patient_records', {LIMIT => 5}
+
+# 5.2 Patient Longitudinal Medical History Range Scan (Instant sub-second access)
+scan 'patient_records', {STARTROW => 'Cardiology#55629189#', STOPROW => 'Cardiology#55629189~', LIMIT => 5}
+
+# ------------------------------------------------------------------------------
+# 6. APPLICATION-SPECIFIC ANALYTICAL QUERIES & FILTERS (RUBRIC: 4 MARKS)
+# ------------------------------------------------------------------------------
+
+# Filter 1: SingleColumnValueFilter - High-Risk 30-Day Hospital Readmissions ('<30')
+scan 'patient_records', {FILTER => "SingleColumnValueFilter('patient', 'readmitted', =, 'binary:<30')", LIMIT => 5}
+
+# Filter 2: SingleColumnValueFilter - Polypharmacy High-Risk Monitoring (num_medications > 15)
+scan 'patient_records', {FILTER => "SingleColumnValueFilter('clinical', 'num_meds', >, 'binary:15')", LIMIT => 5}
+
+# Filter 3: PrefixFilter - Rapid Department Triage (Cardiology Department)
+scan 'patient_records', {FILTER => "PrefixFilter('Cardiology#')", LIMIT => 5}
+
+# Filter 4: RowFilter with RegexStringComparator - Cross-Department Pediatric Encounters
+scan 'patient_records', {FILTER => "RowFilter(=, 'regexstring:^Pediatrics.*')", LIMIT => 5}
+
+# Filter 5: ValueFilter with SubstringComparator - Emergency Room Hospital Admissions
+scan 'patient_records', {FILTER => "ValueFilter(=, 'substring:EMERGENCY')", LIMIT => 5}
+
+# Filter 6: Compound Multi-Filter (FilterList MUST_PASS_ALL) - High-Priority: Cardiac Readmissions Within 30 Days
+scan 'patient_records', {FILTER => "(PrefixFilter('Cardiology#')) AND (SingleColumnValueFilter('patient', 'readmitted', =, 'binary:<30'))", LIMIT => 5}
+
+# Filter 7: ColumnPaginationFilter - Paginate Clinical Metrics for Mobile EHR Synching
+scan 'patient_records', {FILTER => "ColumnPaginationFilter(3, 0)", LIMIT => 5}
+
+# ------------------------------------------------------------------------------
+# 7. AGGREGATION & AUDIT: COUNT OPERATION
+# ------------------------------------------------------------------------------
+# Count total hospital admissions stored in table with client-side caching
+count 'patient_records', INTERVAL => 1000, CACHE => 1000
+
+# ------------------------------------------------------------------------------
+# 8. DATA MODIFICATION & DELETION OPERATIONS (DELETE & DELETEALL)
+# ------------------------------------------------------------------------------
+# 8.1 Delete a specific column/qualifier (Obsolete diagnosis code or lab correction)
+delete 'patient_records', 'Cardiology#55629189#149190', 'clinical:diag_1'
+
+# Verify that clinical:diag_1 was removed
+get 'patient_records', 'Cardiology#55629189#149190', 'clinical'
+
+# 8.2 Delete an entire patient encounter record (Discharged / Sealed EHR)
+deleteall 'patient_records', 'Cardiology#55629189#149190'
+
+# Verify complete deletion (returns 0 rows)
+get 'patient_records', 'Cardiology#55629189#149190'
+
+# ------------------------------------------------------------------------------
+# 9. SCHEMA ALTERATION & MAINTENANCE
+# ------------------------------------------------------------------------------
+# Add a new column family 'genomics' for molecular diagnostics
+alter 'patient_records', {NAME => 'genomics'}
+describe 'patient_records'
